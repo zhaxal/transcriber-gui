@@ -6,7 +6,7 @@ from faster_whisper import WhisperModel
 
 # Setup model
 model_size = "large-v3"
-model = WhisperModel(model_size, device="cuda", compute_type="float16")
+model = WhisperModel(model_size, device="cpu", compute_type="int8")
 
 class TranscriberApp:
     def __init__(self, root):

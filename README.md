@@ -12,7 +12,7 @@ Transcriber GUI is a Python-based application that provides a graphical user int
 
 1. Clone the repository:
   ```sh
-  git clone https://github.com/yourusername/transcriber-gui.git
+  git clone https://github.com/zhaxal/transcriber-gui.git
   cd transcriber-gui
   ```
 
