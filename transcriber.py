@@ -24,6 +24,9 @@ class TranscriberApp:
         self.label = tk.Label(root, text="No file selected")
         self.label.pack(pady=10)
 
+        self.current_transcription_label = tk.Label(root, text="Current transcription: ")
+        self.current_transcription_label.pack(pady=5)
+
         self.status_label = tk.Label(root, text="Status: Idle")
         self.status_label.pack(pady=10)
 
@@ -49,13 +52,17 @@ class TranscriberApp:
         try:
             self.current_file = filename
             output_filename = f"transcripts/{os.path.basename(filename)}.txt"
-
+            
+            # Update the current transcription label with the new file name
+            self.current_transcription_label.config(text=f"Current transcription: {os.path.basename(filename)}")
+            
             segments, info = model.transcribe(filename, beam_size=5)
             with open(output_filename, "w", encoding="utf-8") as file:
                 for segment in segments:
                     file.write("[%.2fs -> %.2fs] %s\n" % (segment.start, segment.end, segment.text))
                     print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
-            print(f"Finished transcribing {filename}")
+            self.current_transcription_label.config(text=f"Current transcription: {os.path.basename(filename)} finished")
+            
         except Exception as e:
             messagebox.showerror("Error", f"Error while transcribing {filename}: {e}")
 
