@@ -24,7 +24,7 @@ class TranscriberApp:
         self.label = tk.Label(root, text="No file selected")
         self.label.pack(pady=10)
 
-        self.current_transcription_label = tk.Label(root, text="Current transcription: ")
+        self.current_transcription_label = tk.Label(root, text="Current transcription: None")
         self.current_transcription_label.pack(pady=5)
 
         self.status_label = tk.Label(root, text="Status: Idle")
