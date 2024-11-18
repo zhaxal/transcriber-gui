@@ -29,7 +29,7 @@ class TranscriberApp:
     def load_model(self):
         try:
             self.log_message("Loading model...")
-            self.model = WhisperModel("large-v3", device="cpu", compute_type="int8")
+            self.model = WhisperModel("large-v3", device="cuda", compute_type="float16")
             self.log_message("Model loaded successfully")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load model: {e}")
