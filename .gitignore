@@ -1,2 +1,5 @@
 __pycache__
 /transcripts/*
+dist
+build
+transcriber.spec
