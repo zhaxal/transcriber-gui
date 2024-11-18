@@ -51,8 +51,8 @@ class TranscriberApp:
         # Progress bar
         self.progress_var = tk.DoubleVar()
         self.progress = ttk.Progressbar(self.middle_frame, 
-                                      variable=self.progress_var,
-                                      maximum=100)
+        variable=self.progress_var,
+        maximum=100)
         self.progress.pack(fill=tk.X, pady=5)
         
         # Status labels
@@ -134,6 +134,51 @@ class TranscriberApp:
         # Skip button enabled only during transcription
         self.skip_button.config(state="normal" if self.transcribing else "disabled")
         self.cancel_button.config(state="normal" if self.transcribing else "disabled")
+
+    def start_transcription(self):
+        if not self.file_list:
+            messagebox.showwarning("Warning", "No files selected")
+            return
+            
+        if self.transcribing:
+            return
+            
+        # Create transcripts directory if it doesn't exist
+        os.makedirs("transcripts", exist_ok=True)
+        
+        self.transcribing = True
+        self.update_ui_state()
+        self.status_label.config(text="Status: Transcribing...")
+        
+        # Start transcription in a separate thread
+        def transcribe_queue():
+            while self.queue_position < len(self.file_list) and self.transcribing:
+                self.transcribe_file(self.file_list[self.queue_position])
+            
+            self.transcribing = False
+            self.current_file = None
+            self.current_file_label.config(text="Current file: None")
+            self.status_label.config(text="Status: Ready")
+            self.update_ui_state()
+        
+        thread = threading.Thread(target=transcribe_queue)
+        thread.daemon = True
+        thread.start()
+
+    def cancel_transcription(self):
+        if self.transcribing:
+            self.transcribing = False
+            self.status_label.config(text="Status: Cancelled")
+            self.queue_position = 0
+            self.progress_var.set(0)
+            self.update_queue_display()
+            self.update_ui_state()
+
+    def skip_file(self):
+        if self.transcribing and self.current_file:
+            self.queue_position += 1
+            self.progress_var.set((self.queue_position / len(self.file_list)) * 100)
+            self.update_queue_display()
 
 if __name__ == "__main__":
     root = tk.Tk()
