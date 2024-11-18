@@ -26,11 +26,12 @@ class TranscriberApp:
         
     def load_model(self):
         try:
-            self.status_label.config(text="Status: Loading model...")
+            self.log_message("Loading model...")
             self.model = WhisperModel("large-v3", device="cpu", compute_type="int8")
-            self.status_label.config(text="Status: Ready")
+            self.log_message("Model loaded successfully")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load model: {e}")
+            self.log_message(f"Error loading model: {e}")
             
     def setup_ui(self):
         # Main containers
@@ -55,10 +56,20 @@ class TranscriberApp:
         maximum=100)
         self.progress.pack(fill=tk.X, pady=5)
         
-        # Status labels
-        self.status_label = ttk.Label(self.bottom_frame, text="Status: Ready")
-        self.status_label.pack(side=tk.LEFT, pady=5)
+        # Log display
+        self.log_frame = ttk.LabelFrame(self.bottom_frame, text="Log")
+        self.log_frame.pack(fill=tk.BOTH, expand=True, pady=5)
         
+        self.log_text = tk.Text(self.log_frame, height=5, width=50, wrap=tk.WORD)
+        self.log_text.pack(fill=tk.BOTH, expand=True)
+        
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(self.log_frame, orient="vertical", 
+                                 command=self.log_text.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.log_text.configure(yscrollcommand=scrollbar.set)
+        
+        # Current file label remains
         self.current_file_label = ttk.Label(self.bottom_frame, 
                                           text="Current file: None")
         self.current_file_label.pack(side=tk.RIGHT, pady=5)
@@ -101,6 +112,7 @@ class TranscriberApp:
             self.current_file = filename
             basename = os.path.basename(filename)
             self.current_file_label.config(text=f"Current file: {basename}")
+            self.log_message(f"Transcribing {basename}...")
             
             segments, info = self.model.transcribe(filename, beam_size=5)
             
@@ -108,13 +120,16 @@ class TranscriberApp:
             with open(output_path, "w", encoding="utf-8") as file:
                 for segment in segments:
                     file.write(f"[{segment.start:.2f}s -> {segment.end:.2f}s] {segment.text}\n")
-                    
+            
+            self.log_message(f"Completed transcription of {basename}")
             self.queue_position += 1
             self.progress_var.set((self.queue_position / len(self.file_list)) * 100)
             self.update_queue_display()
             
         except Exception as e:
-            messagebox.showerror("Error", f"Error transcribing {basename}: {e}")
+            error_msg = f"Error transcribing {basename}: {e}"
+            messagebox.showerror("Error", error_msg)
+            self.log_message(error_msg)
             
     def select_files(self):
         files = filedialog.askopenfilenames(
@@ -148,7 +163,7 @@ class TranscriberApp:
         
         self.transcribing = True
         self.update_ui_state()
-        self.status_label.config(text="Status: Transcribing...")
+        self.log_message("Starting transcription...")
         
         # Start transcription in a separate thread
         def transcribe_queue():
@@ -158,7 +173,7 @@ class TranscriberApp:
             self.transcribing = False
             self.current_file = None
             self.current_file_label.config(text="Current file: None")
-            self.status_label.config(text="Status: Ready")
+            self.log_message("Transcription completed")
             self.update_ui_state()
         
         thread = threading.Thread(target=transcribe_queue)
@@ -168,7 +183,7 @@ class TranscriberApp:
     def cancel_transcription(self):
         if self.transcribing:
             self.transcribing = False
-            self.status_label.config(text="Status: Cancelled")
+            self.log_message("Transcription cancelled")
             self.queue_position = 0
             self.progress_var.set(0)
             self.update_queue_display()
@@ -179,6 +194,12 @@ class TranscriberApp:
             self.queue_position += 1
             self.progress_var.set((self.queue_position / len(self.file_list)) * 100)
             self.update_queue_display()
+
+    def log_message(self, message):
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.log_text.insert(tk.END, f"[{timestamp}] {message}\n")
+        self.log_text.see(tk.END)  # Auto-scroll to bottom
 
 if __name__ == "__main__":
     root = tk.Tk()
