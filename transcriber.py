@@ -3,6 +3,8 @@ import threading
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from faster_whisper import WhisperModel
+from pathlib import Path
+import time
 
 class TranscriberApp:
     def __init__(self, root):
@@ -90,6 +92,12 @@ class TranscriberApp:
         self.skip_button = ttk.Button(self.button_frame,
                                     text="Skip (⌘S)",
                                     command=self.skip_file)
+        self.view_transcripts_button = ttk.Button(
+            self.button_frame,
+            text="View Transcripts (⌘T)",
+            command=self.show_transcript_viewer
+        )
+        self.view_transcripts_button.pack(side=tk.LEFT, padx=5)
         
         for btn in (self.select_button, self.transcribe_button,
                    self.cancel_button, self.skip_button):
@@ -100,6 +108,7 @@ class TranscriberApp:
         self.root.bind('<Command-r>', lambda e: self.start_transcription())
         self.root.bind('<Command-c>', lambda e: self.cancel_transcription())
         self.root.bind('<Command-s>', lambda e: self.skip_file())
+        self.root.bind('<Command-t>', lambda e: self.show_transcript_viewer())
         
     def update_queue_display(self):
         self.queue_list.delete(0, tk.END)
@@ -200,6 +209,105 @@ class TranscriberApp:
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.log_text.insert(tk.END, f"[{timestamp}] {message}\n")
         self.log_text.see(tk.END)  # Auto-scroll to bottom
+
+    def show_transcript_viewer(self):
+        viewer = TranscriptViewer(self.root)
+        viewer.grab_set()  # Make window modal
+
+class TranscriptViewer(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Transcript Viewer")
+        self.geometry("900x600")
+        
+        # Split view
+        self.paned = ttk.PanedWindow(self, orient=tk.HORIZONTAL)
+        self.paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Left side - file list
+        self.files_frame = ttk.LabelFrame(self.paned, text="Transcripts")
+        self.files_list = tk.Listbox(self.files_frame, width=40)
+        self.files_list.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.files_list.bind('<<ListboxSelect>>', self.on_select_file)
+        
+        # Right side - transcript view
+        self.transcript_frame = ttk.LabelFrame(self.paned, text="Content")
+        self.transcript_text = tk.Text(
+            self.transcript_frame, 
+            wrap=tk.WORD, 
+            width=60
+        )
+        self.transcript_text.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+        
+        # Add scroll bars
+        self.files_scroll = ttk.Scrollbar(
+            self.files_frame, 
+            command=self.files_list.yview
+        )
+        self.files_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.files_list.configure(yscrollcommand=self.files_scroll.set)
+        
+        self.transcript_scroll = ttk.Scrollbar(
+            self.transcript_frame, 
+            command=self.transcript_text.yview
+        )
+        self.transcript_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.transcript_text.configure(yscrollcommand=self.transcript_scroll.set)
+        
+        # Add to paned window
+        self.paned.add(self.files_frame)
+        self.paned.add(self.transcript_frame)
+        
+        # Buttons
+        self.button_frame = ttk.Frame(self)
+        self.button_frame.pack(fill=tk.X, padx=5, pady=5)
+        
+        self.refresh_button = ttk.Button(
+            self.button_frame,
+            text="Refresh",
+            command=self.refresh_files
+        )
+        self.refresh_button.pack(side=tk.LEFT, padx=5)
+        
+        self.open_folder_button = ttk.Button(
+            self.button_frame,
+            text="Open in Finder",
+            command=self.open_folder
+        )
+        self.open_folder_button.pack(side=tk.LEFT, padx=5)
+        
+        # Load files initially
+        self.refresh_files()
+        
+    def refresh_files(self):
+        self.files_list.delete(0, tk.END)
+        transcript_dir = Path("transcripts")
+        if transcript_dir.exists():
+            files = sorted(
+                transcript_dir.glob("*.txt"), 
+                key=lambda x: x.stat().st_mtime,
+                reverse=True
+            )
+            for file in files:
+                self.files_list.insert(tk.END, file.name)
+                
+    def on_select_file(self, event):
+        if not self.files_list.curselection():
+            return
+        
+        filename = self.files_list.get(self.files_list.curselection())
+        filepath = Path("transcripts") / filename
+        
+        self.transcript_text.delete(1.0, tk.END)
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+                self.transcript_text.insert(1.0, content)
+        except Exception as e:
+            self.transcript_text.insert(1.0, f"Error loading file: {e}")
+            
+    def open_folder(self):
+        os.system(f"open transcripts")
 
 if __name__ == "__main__":
     root = tk.Tk()
