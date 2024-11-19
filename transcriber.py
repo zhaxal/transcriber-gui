@@ -29,8 +29,14 @@ class TranscriberApp:
     def load_model(self):
         try:
             self.log_message("Loading model...")
-            self.model = WhisperModel("large-v3", device="cuda", compute_type="float16")
-            self.log_message("Model loaded successfully")
+            try:
+                # Try CUDA first
+                self.model = WhisperModel("large-v3", device="cuda", compute_type="float16")
+                self.log_message("Model loaded successfully with CUDA")
+            except:
+                # Fallback to CPU
+                self.model = WhisperModel("large-v3", device="cpu", compute_type="int8")
+                self.log_message("Model loaded successfully with CPU (CUDA not available)")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load model: {e}")
             self.log_message(f"Error loading model: {e}")
