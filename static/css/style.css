@@ -1,0 +1,26 @@
+/* static/css/style.css */
+.progress {
+    height: 25px;
+}
+
+.card {
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+#status-message {
+    margin-bottom: 0;
+}
+
+.progress-bar {
+    transition: width 0.5s ease-in-out;
+}
+
+.status-change {
+    animation: highlight 1s ease-in-out;
+}
+
+@keyframes highlight {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}

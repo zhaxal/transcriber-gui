@@ -1,0 +1,38 @@
+<!-- templates/index.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Upload Audio File</h5>
+                <div class="alert alert-info">
+                    <small>
+                        Supported formats: MP3, WAV, M4A, AAC<br>
+                        Maximum file size: 100MB
+                    </small>
+                </div>
+                <form id="upload-form">
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="audio-file" 
+                               accept=".mp3,.wav,.m4a,.aac">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        Transcribe
+                    </button>
+                </form>
+                
+                <div class="progress mt-3 d-none" id="progress-bar-container">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%" aria-valuenow="0" 
+                         aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                
+                <div class="alert mt-3 d-none" id="status-message"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

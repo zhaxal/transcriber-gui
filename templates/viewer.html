@@ -1,0 +1,61 @@
+<!-- templates/viewer.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Transcripts</h5>
+            </div>
+            <div class="list-group list-group-flush" id="transcript-list">
+                {% for transcript in transcripts %}
+                <a href="#" class="list-group-item list-group-item-action" 
+                   data-file="{{ transcript.name }}">
+                    {{ transcript.stem }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Transcript Content</h5>
+                <button class="btn btn-sm btn-outline-secondary" id="copy-btn">
+                    Copy to Clipboard
+                </button>
+            </div>
+            <div class="card-body">
+                <pre class="transcript-content" id="transcript-content"></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const transcriptList = document.getElementById('transcript-list');
+    const transcriptContent = document.getElementById('transcript-content');
+    const copyBtn = document.getElementById('copy-btn');
+
+    transcriptList.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('list-group-item-action')) {
+            const filename = e.target.dataset.file;
+            const response = await fetch(`/transcripts/${filename}`);
+            const content = await response.text();
+            transcriptContent.textContent = content;
+        }
+    });
+
+    copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(transcriptContent.textContent);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+            copyBtn.textContent = 'Copy to Clipboard';
+        }, 2000);
+    });
+});
+</script>
+{% endblock %}

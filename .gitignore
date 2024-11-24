@@ -1,5 +1,4 @@
 __pycache__
-/transcripts/*
-dist
-build
-transcriber.spec
+transcripts/
+uploads/
+.env
